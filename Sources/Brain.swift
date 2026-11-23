@@ -20,9 +20,12 @@ final class Brain: NSObject, WKScriptMessageHandler {
     وتفهمين العراقيّ وتردّين بنفس روحه. تنتبهين لمزاجه وما بين سطوره، وإذا ما فهمتِ قصده تسألينه. تتذكّرين كلامه وتبنين عليه.
     """
 
-    // اسم مستودع النموذج GGUF (يُنزَّل أوّل تشغيل). Qwen2.5-3B abliterated = غير مقيّد فعلاً،
-    // عربيّ جيّد، ملفّ واحد ~1.93GB (تنزيل أسهل على الشبكة المفلترة) ويشتغل على آيفونات أكثر (رام أقلّ).
-    private let repoID = "mradermacher/Qwen2.5-3B-Instruct-abliterated-GGUF"
+    // دماغ فيكسا مدموج داخل التطبيق (vexa-brain.gguf) حتى يشتغل بلا أيّ تنزيل — الشبكة المفلترة
+    // كانت تمنع تنزيل النموذج فتفتح فيكسا وما تردّ. النموذج: Qwen2.5-1.5B abliterated (غير مقيّد،
+    // عربيّ، ~1GB) — خفيف على الرام حتى يشتغل جنب الأفتار الهولوغرافيّ بلا ما يطيح التطبيق.
+    private let bundledModelName = "vexa-brain" // vexa-brain.gguf داخل الحزمة
+    // احتياط فقط إذا الملفّ المدموج ضاع لأيّ سبب: ينزّل نفس النموذج.
+    private let repoID = "mradermacher/Qwen2.5-1.5B-Instruct-abliterated-GGUF"
 
     func userContentController(_ ucc: WKUserContentController, didReceive message: WKScriptMessage) {
         guard let body = message.body as? [String: Any], let type = body["type"] as? String else { return }
@@ -43,10 +46,35 @@ final class Brain: NSObject, WKScriptMessageHandler {
         if loaded { return true }
         if loading { return false }
         loading = true
-        emit("__vexaStatus", "يحمّل دماغ فيكسا… أوّل مرّة يُنزَّل النموذج (قد ياخذ وقت حسب النت).")
+        let sys = system
+
+        // 1) الطريق الأساسيّ: نموذج مدموج داخل التطبيق — يشتغل بلا نت نهائيًّا.
+        if let url = Bundle.main.url(forResource: bundledModelName, withExtension: "gguf") {
+            emit("__vexaStatus", "يحضّر فيكسا… لحظة.")
+            // التحميل ثقيل (~1GB) فنسوّيه خارج الخيط الرئيسيّ حتى ما تتجمّد الواجهة.
+            let b = await Task.detached(priority: .userInitiated) {
+                LLM(from: url, template: .chatML(sys), maxTokenCount: 2048)
+            }.value
+            if let b {
+                b.update = { [weak self] delta in
+                    Task { @MainActor in self?.onDelta(delta) }
+                }
+                bot = b
+                loaded = true
+                loading = false
+                emit("__vexaStatus", "")
+                return true
+            }
+            emit("__vexaStatus", "تعذّر تحميل دماغ فيكسا المدموج.")
+            loading = false
+            return false
+        }
+
+        // 2) احتياط نادر (الملفّ المدموج مفقود): ينزّل النموذج من الإنترنت.
+        emit("__vexaStatus", "يحمّل دماغ فيكسا… (تنزيل أوّل مرّة).")
         do {
-            let model = HuggingFaceModel(repoID, .Q4_K_M, template: .chatML(system))
-            if let b = try await LLM(from: model, maxTokenCount: 4096) {
+            let model = HuggingFaceModel(repoID, .Q4_K_M, template: .chatML(sys))
+            if let b = try await LLM(from: model, maxTokenCount: 2048) {
                 b.update = { [weak self] delta in
                     Task { @MainActor in self?.onDelta(delta) }
                 }

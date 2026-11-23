@@ -3,3 +3,6 @@ Payload/
 *.ipa
 *.xcodeproj/
 .DS_Store
+
+# نموذج الدماغ يُنزَّل وقت البناء على الرَنر (كبير جدًّا للريبو)
+Resources/model/*.gguf

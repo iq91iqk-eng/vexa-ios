@@ -10,6 +10,15 @@ jobs:
         run: xcodebuild -version
       - name: Install XcodeGen
         run: brew install xcodegen
+      - name: Download bundled brain model (offline, no in-app download)
+        run: |
+          set -o pipefail
+          mkdir -p Resources/model
+          curl -L --fail --retry 4 --retry-delay 5 -o Resources/model/vexa-brain.gguf \
+            "https://huggingface.co/mradermacher/Qwen2.5-1.5B-Instruct-abliterated-GGUF/resolve/main/Qwen2.5-1.5B-Instruct-abliterated.Q4_K_M.gguf"
+          ls -lh Resources/model/vexa-brain.gguf
+          # تأكّد إنّه ملفّ GGUF حقيقيّ (يبدأ بـ "GGUF") مو صفحة خطأ HTML
+          head -c 4 Resources/model/vexa-brain.gguf | grep -q GGUF || { echo "model download corrupt"; exit 1; }
       - name: Generate Xcode project
         run: xcodegen generate
       - name: Trust Swift macros (LLM.swift uses a macro)

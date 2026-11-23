@@ -1,0 +1,1 @@
+# bundled gguf is downloaded at CI build time (see .github/workflows/ios.yml)
