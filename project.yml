@@ -1,0 +1,30 @@
+name: Vexa
+options:
+  bundleIdPrefix: com.dawwirli
+  deploymentTarget:
+    iOS: "16.0"
+  createIntermediateGroups: true
+targets:
+  Vexa:
+    type: application
+    platform: iOS
+    sources:
+      - path: Sources
+      - path: Resources/www
+        type: folder
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.dawwirli.vexa
+        MARKETING_VERSION: "1.0"
+        CURRENT_PROJECT_VERSION: "1"
+        TARGETED_DEVICE_FAMILY: "1,2"
+        GENERATE_INFOPLIST_FILE: YES
+        INFOPLIST_KEY_CFBundleDisplayName: Vexa
+        INFOPLIST_KEY_NSCameraUsageDescription: "فيكسا تباوعلك لمّا تشغّل الكاميرا"
+        INFOPLIST_KEY_NSMicrophoneUsageDescription: "فيكسا تسمعك لمّا تحچيلها"
+        INFOPLIST_KEY_NSSpeechRecognitionUsageDescription: "فيكسا تفهم حچيك"
+        INFOPLIST_KEY_UILaunchScreen_Generation: YES
+        INFOPLIST_KEY_UISupportedInterfaceOrientations: UIInterfaceOrientationPortrait
+        INFOPLIST_KEY_UIStatusBarStyle: UIStatusBarStyleLightContent
+        CODE_SIGNING_ALLOWED: NO
+        CODE_SIGNING_REQUIRED: NO

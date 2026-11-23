@@ -1,0 +1,5 @@
+dd/
+Payload/
+*.ipa
+*.xcodeproj/
+.DS_Store
