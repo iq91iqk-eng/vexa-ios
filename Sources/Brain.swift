@@ -20,8 +20,9 @@ final class Brain: NSObject, WKScriptMessageHandler {
     وتفهمين العراقيّ وتردّين بنفس روحه. تنتبهين لمزاجه وما بين سطوره، وإذا ما فهمتِ قصده تسألينه. تتذكّرين كلامه وتبنين عليه.
     """
 
-    // اسم مستودع النموذج GGUF (يُنزَّل أوّل تشغيل). Qwen2.5-7B يدعم العربيّة ويشتغل على 17 برو ماكس.
-    private let repoID = "unsloth/Qwen2.5-7B-Instruct-GGUF"
+    // اسم مستودع النموذج GGUF (يُنزَّل أوّل تشغيل). Qwen2.5-3B abliterated = غير مقيّد فعلاً،
+    // عربيّ جيّد، ملفّ واحد ~1.93GB (تنزيل أسهل على الشبكة المفلترة) ويشتغل على آيفونات أكثر (رام أقلّ).
+    private let repoID = "mradermacher/Qwen2.5-3B-Instruct-abliterated-GGUF"
 
     func userContentController(_ ucc: WKUserContentController, didReceive message: WKScriptMessage) {
         guard let body = message.body as? [String: Any], let type = body["type"] as? String else { return }
