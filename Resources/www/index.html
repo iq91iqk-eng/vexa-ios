@@ -147,6 +147,12 @@ const SYS=`أنتِ فيكسا (Vexa)، رفيقة خيري الرقميّة ا�
 let history=[]; let notes='';
 try{ history=JSON.parse(localStorage.getItem('vexa_history')||'[]'); notes=localStorage.getItem('vexa_notes')||''; }catch(e){}
 let turns=0;
+const NATIVE = !!(window.webkit && window.webkit.messageHandlers && window.webkit.messageHandlers.vexa);
+let _nth=null,_nacc='',_nbub=null;
+window.__vexaStatus=(s)=>{ if(_nth){ _nth.innerHTML = s ? ('فيكسا: '+s) : 'فيكسا تفكّر <b></b><b></b><b></b>'; chat.scrollTop=chat.scrollHeight; } };
+window.__vexaDelta=(d)=>{ if(!_nbub){ if(_nth&&_nth.parentNode)_nth.remove(); _nth=null; _nbub=add('v',''); speakT=90; } _nacc+=d; _nbub.textContent=_nacc; chat.scrollTop=chat.scrollHeight; speakT=50; };
+window.__vexaDone=()=>{ if(_nbub){ history.push({role:'assistant',content:_nacc}); save(); speak(_nacc); } _nbub=null; _nacc=''; };
+window.__vexaError=()=>{ if(_nth&&_nth.parentNode)_nth.remove(); _nth=null; add('v','ما أگدر أوصل لدماغي الآن.'); };
 function add(cls,txt){ const d=document.createElement('div'); d.className='msg '+cls; d.textContent=txt; chat.appendChild(d); chat.scrollTop=chat.scrollHeight; return d; }
 function thinkEl(){ const th=document.createElement('div'); th.className='think'; th.innerHTML='فيكسا تفكّر <b></b><b></b><b></b>'; chat.appendChild(th); chat.scrollTop=chat.scrollHeight; speakT=60; return th; }
 function save(){ try{ localStorage.setItem('vexa_history',JSON.stringify(history.slice(-60))); localStorage.setItem('vexa_notes',notes); }catch(e){} }
@@ -154,6 +160,7 @@ function save(){ try{ localStorage.setItem('vexa_history',JSON.stringify(history
 async function ask(userText){
   history.push({role:'user',content:userText});
   const th=thinkEl();
+  if(NATIVE){ _nth=th; _nacc=''; _nbub=null; window.webkit.messageHandlers.vexa.postMessage({type:'chat',text:userText}); return; }
   const sys=SYS+(notes?('\n\nما تعرفينه عن خيري (ذاكرتك):\n'+notes):'');
   const msgs=[{role:'system',content:sys},...history.slice(-14)];
   let bubble=null, acc='';

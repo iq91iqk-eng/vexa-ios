@@ -1,14 +1,21 @@
 import SwiftUI
 import WebKit
 
-// قشرة فيكسا: WKWebView يعرض واجهة فيكسا المدموجة (نفس الواجهة الحيّة).
-// الدماغ على‑الجهاز (llama.cpp) يُضاف بالمرحلة الجايّة كجسر JS↔Swift.
+// قشرة فيكسا: WKWebView يعرض الواجهة المدموجة + جسر للدماغ على‑الجهاز (Brain).
 struct WebHost: UIViewRepresentable {
+    func makeCoordinator() -> Brain { Brain() }
+
     func makeUIView(context: Context) -> WKWebView {
+        let ucc = WKUserContentController()
+        ucc.add(context.coordinator, name: "vexa")
+
         let cfg = WKWebViewConfiguration()
         cfg.allowsInlineMediaPlayback = true
         cfg.mediaTypesRequiringUserActionForPlayback = []
+        cfg.userContentController = ucc
+
         let wv = WKWebView(frame: .zero, configuration: cfg)
+        context.coordinator.webView = wv
         wv.isOpaque = false
         wv.backgroundColor = .black
         wv.scrollView.bounces = false
@@ -17,5 +24,6 @@ struct WebHost: UIViewRepresentable {
         }
         return wv
     }
+
     func updateUIView(_ uiView: WKWebView, context: Context) {}
 }

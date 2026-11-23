@@ -4,6 +4,10 @@ options:
   deploymentTarget:
     iOS: "16.0"
   createIntermediateGroups: true
+packages:
+  LLM:
+    url: https://github.com/eastriverlee/LLM.swift/
+    branch: main
 targets:
   Vexa:
     type: application
@@ -12,12 +16,16 @@ targets:
       - path: Sources
       - path: Resources/www
         type: folder
+    dependencies:
+      - package: LLM
+        product: LLM
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.dawwirli.vexa
         MARKETING_VERSION: "1.0"
         CURRENT_PROJECT_VERSION: "1"
         TARGETED_DEVICE_FAMILY: "1,2"
+        SWIFT_VERSION: "5.0"
         GENERATE_INFOPLIST_FILE: YES
         INFOPLIST_KEY_CFBundleDisplayName: Vexa
         INFOPLIST_KEY_NSCameraUsageDescription: "فيكسا تباوعلك لمّا تشغّل الكاميرا"
