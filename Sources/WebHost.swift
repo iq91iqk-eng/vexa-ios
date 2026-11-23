@@ -16,6 +16,7 @@ struct WebHost: UIViewRepresentable {
 
         let wv = WKWebView(frame: .zero, configuration: cfg)
         context.coordinator.webView = wv
+        context.coordinator.speech.webView = wv
         wv.isOpaque = false
         wv.backgroundColor = .black
         wv.scrollView.bounces = false

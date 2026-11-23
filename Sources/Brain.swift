@@ -7,6 +7,7 @@ import LLM
 @MainActor
 final class Brain: NSObject, WKScriptMessageHandler {
     weak var webView: WKWebView?
+    let speech = Speech()
     private var bot: LLM?
     private var loading = false
     private var loaded = false
@@ -24,8 +25,16 @@ final class Brain: NSObject, WKScriptMessageHandler {
 
     func userContentController(_ ucc: WKUserContentController, didReceive message: WKScriptMessage) {
         guard let body = message.body as? [String: Any], let type = body["type"] as? String else { return }
-        if type == "chat", let text = body["text"] as? String, !text.isEmpty {
-            Task { await handle(text) }
+        switch type {
+        case "chat":
+            if let text = body["text"] as? String, !text.isEmpty { Task { await handle(text) } }
+        case "listen":
+            speech.webView = webView
+            speech.start()
+        case "stopListen":
+            speech.stop()
+        default:
+            break
         }
     }
 
