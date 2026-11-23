@@ -156,18 +156,52 @@ const fill=new THREE.DirectionalLight(0x8b5cf6,0.8); fill.position.set(2,-0.5,1)
 const morphRefs={}; let head=null,neck=null,le=null,re=null, baseH=null,baseLE=null,baseRE=null, ready=false;
 function setM(n,v){ const a=morphRefs[n]; if(a) for(const r of a) r.m.morphTargetInfluences[r.i]=v; }
 
+// ===== خامة الهولوغرام: شخصيّة ضوئيّة فيروزيّة شفّافة (مو واقعيّة بشريّة) =====
+const holoShaders=[];
+const HOLO_FRAG = `
+  // --- hologram overlay ---
+  float _f = 1.0 - abs(dot(normalize(vNormal), normalize(vViewPosition)));
+  float fres = pow(clamp(_f,0.0,1.0), 1.7);
+  vec3 holoCol = vec3(0.30, 0.92, 1.0);
+  vec3 edgeCol = vec3(0.62, 0.78, 1.0);
+  float scan = sin((gl_FragCoord.y + uTime*55.0) * 0.55) * 0.5 + 0.5;
+  scan = mix(0.70, 1.0, scan);
+  float band = step(0.985, fract((gl_FragCoord.y - uTime*120.0) * 0.004)); // شريط مسح يمرّ
+  float flick = 0.90 + 0.10 * sin(uTime*26.0) * sin(uTime*7.3);
+  vec3 base = gl_FragColor.rgb;
+  float lum = dot(base, vec3(0.299,0.587,0.114));
+  vec3 col = mix(holoCol*(0.35+lum*0.9), edgeCol, fres*0.85);
+  col += holoCol * fres * 0.75;
+  col += edgeCol * band * 0.9;
+  col *= scan * flick;
+  float a = clamp(0.26 + fres*0.80 + band*0.4, 0.0, 1.0);
+  gl_FragColor = vec4(col, a);
+`;
+function makeHolo(mat){
+  if(!mat || mat.__holo) return mat; mat.__holo=true;
+  mat.transparent=true; mat.depthWrite=true; mat.side=THREE.FrontSide;
+  mat.onBeforeCompile=(sh)=>{
+    sh.uniforms.uTime={value:0};
+    sh.fragmentShader='uniform float uTime;\n'+sh.fragmentShader
+      .replace('#include <dithering_fragment>','#include <dithering_fragment>\n'+HOLO_FRAG);
+    holoShaders.push(sh);
+  };
+  mat.needsUpdate=true; return mat;
+}
+
 new GLTFLoader().load('avatar/avaturn.glb',(g)=>{
   const root=g.scene; scene.add(root);
   root.traverse(o=>{
     if(o.isBone){ if(/^Head$/i.test(o.name)) head=o; else if(/^Neck$/i.test(o.name)) neck=o;
       else if(/LeftEye/i.test(o.name)) le=o; else if(/RightEye/i.test(o.name)) re=o; }
     if(o.morphTargetDictionary){ for(const k in o.morphTargetDictionary){ (morphRefs[k]||(morphRefs[k]=[])).push({m:o,i:o.morphTargetDictionary[k]}); } }
-    if(o.isMesh){ o.frustumCulled=false; if(o.material){ o.material.envMapIntensity=0.6; } }
+    if(o.isMesh){ o.frustumCulled=false; o.renderOrder=2;
+      if(Array.isArray(o.material)) o.material.forEach(makeHolo); else makeHolo(o.material); }
   });
   if(head){ baseH=head.rotation.clone(); }
   if(le){ baseLE=le.rotation.clone(); } if(re){ baseRE=re.rotation.clone(); }
   const hp=new THREE.Vector3(); (head||root).getWorldPosition(hp);
-  cam.position.set(hp.x, hp.y-0.04, hp.z+1.30); cam.lookAt(hp.x, hp.y-0.14, hp.z);
+  cam.position.set(hp.x, hp.y+0.03, hp.z+1.46); cam.lookAt(hp.x, hp.y-0.09, hp.z);
   ready=true;
   const lh=document.getElementById('loadhint'); lh.style.opacity='0'; setTimeout(()=>lh.remove(),600);
   const w=document.getElementById('welcome'); w.style.opacity='1';
@@ -202,6 +236,10 @@ function tick(){
     document.getElementById('speakGlow').style.opacity=(speakT>0? 0.3+sp*0.4:0).toFixed(2);
     rim.intensity = 2.2 + sp*1.2;
     if(speakT>0) speakT--;
+
+    // نبض زمن الهولوغرام (+ ارتعاش خفيف عند الحچي)
+    const ut = t + (speakT>0 ? sp*0.15 : 0);
+    for(const sh of holoShaders) sh.uniforms.uTime.value = ut;
 
     rnd.render(scene,cam);
   }
