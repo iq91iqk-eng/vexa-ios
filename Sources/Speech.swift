@@ -20,7 +20,7 @@ final class Speech: NSObject {
             Task { @MainActor in
                 guard let self else { return }
                 guard status == .authorized else { self.emitState(false); return }
-                AVAudioApplication.requestRecordPermission { granted in
+                AVAudioSession.sharedInstance().requestRecordPermission { granted in
                     Task { @MainActor in
                         guard granted else { self.emitState(false); return }
                         self.begin()
